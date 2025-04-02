@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"time"
 
 	_ "github.com/glebarez/sqlite"
 	tele "gopkg.in/telebot.v3"
@@ -33,9 +34,9 @@ func NewJoinHandler(dbPath string) *JoinHandler {
 	return &JoinHandler{db: db}
 }
 
-func (h *JoinHandler) LogJoin(chat *tele.Chat, userID int64) error {
-	q := `INSERT INTO join_events (user_id, chat_id, chat_title) VALUES (?, ?, ?)`
-	_, err := h.db.Exec(q, userID, chat.ID, chat.Title)
+func (h *JoinHandler) LogJoin(chat *tele.Chat, userID int64, timestamp time.Time) error {
+	q := `INSERT INTO join_events (user_id, chat_id, chat_title, created_at) VALUES (?, ?, ?, ?)`
+	_, err := h.db.Exec(q, userID, chat.ID, chat.Title, timestamp)
 	if err != nil {
 		return fmt.Errorf("failed to log join event: %w", err)
 	}

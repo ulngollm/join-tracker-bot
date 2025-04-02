@@ -59,8 +59,11 @@ func handleJoin(c tele.Context) error {
 	if c.ChatMember().NewChatMember.Role == tele.Left {
 		return nil
 	}
+	//todo понять, что пользователь реально новый
+	//возможно никак. OldChatMember есть и у новых пользователей
 	userID := c.ChatMember().Sender.ID
-	if err := joinHandler.LogJoin(c.Chat(), userID); err != nil {
+	t := c.ChatMember().Time()
+	if err := joinHandler.LogJoin(c.Chat(), userID, t); err != nil {
 		log.Printf("logJoin: %s", err)
 	}
 	log.Printf("Logged join event: user %d joined chat %s", userID, c.Chat().Title)
