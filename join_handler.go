@@ -7,7 +7,7 @@ import (
 	"time"
 
 	_ "github.com/glebarez/sqlite"
-	tele "gopkg.in/telebot.v3"
+	tele "gopkg.in/telebot.v4"
 )
 
 type JoinHandler struct {

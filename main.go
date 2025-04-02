@@ -1,11 +1,11 @@
 package main
 
 import (
+	"fmt"
+	"github.com/joho/godotenv"
+	tele "gopkg.in/telebot.v4"
 	"log"
 	"os"
-
-	"github.com/joho/godotenv"
-	tele "gopkg.in/telebot.v3"
 )
 
 var (
@@ -33,8 +33,12 @@ func init() {
 	pref := tele.Settings{
 		Token:     botToken,
 		ParseMode: tele.ModeMarkdown,
-		Poller:    &tele.LongPoller{
-			//AllowedUpdates: []string{"chat_member"},
+		Poller: &tele.LongPoller{
+			AllowedUpdates: []string{
+				"chat_member",
+				"message_reaction",
+				"message_reaction_count",
+			},
 		},
 	}
 	bot, err = tele.NewBot(pref)
@@ -45,10 +49,12 @@ func init() {
 }
 
 func main() {
+	bot.Handle(tele.OnMessageReaction, onChatReaction)
+	bot.Handle(tele.OnMessageReactionCount, onChannelReactions)
 	bot.Handle(tele.OnChatMember, handleJoin)
 
 	//see also
-	//tele.OnUserJoined // todo актуальность сомнительна
+	//tele.OnUserJoined // когда пользователь вступает в группу и фиксируется сообщение о новом пользователе
 	//tele.OnChatJoinRequest // событие запроса на вструпление в чат. Только для тех, где установлена премодерация? see approveChatJoinRequest
 	//tele.OnMyChatMember  // показывает изменение статуса бота в этом чате
 
@@ -67,5 +73,15 @@ func handleJoin(c tele.Context) error {
 		log.Printf("logJoin: %s", err)
 	}
 	log.Printf("Logged join event: user %d joined chat %s", userID, c.Chat().Title)
+	return nil
+}
+
+func onChannelReactions(c tele.Context) error {
+	fmt.Printf("add %d %s reactions to chat %s", c.Update().MessageReactionCount.Reactions[0].Count, c.Update().MessageReactionCount.Reactions[0].Type.Emoji, c.Update().MessageReactionCount.Chat.Title)
+	return nil
+}
+
+func onChatReaction(c tele.Context) error {
+	fmt.Printf("%s reaction from user %s to chat %s", c.Update().MessageReaction.NewReaction[0].Emoji, c.Update().MessageReaction.User.Username, c.Update().MessageReaction.Chat.Title)
 	return nil
 }
