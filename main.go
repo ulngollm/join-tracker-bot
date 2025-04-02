@@ -20,7 +20,16 @@ func init() {
 		return
 	}
 
-	botToken := os.Getenv("TOKEN")
+	dbPath, ok := os.LookupEnv("DB_PATH")
+	if !ok {
+		log.Fatalf("DB_PATH variable is not defined")
+	}
+	botToken, ok := os.LookupEnv("TOKEN")
+	if !ok {
+		log.Fatalf("bot token is not set")
+	}
+
+	joinHandler = NewJoinHandler(dbPath)
 	pref := tele.Settings{
 		Token:     botToken,
 		ParseMode: tele.ModeMarkdown,
@@ -36,8 +45,6 @@ func init() {
 }
 
 func main() {
-	joinHandler = NewJoinHandler("join_events.db")
-
 	bot.Handle(tele.OnChatMember, handleJoin)
 
 	//see also

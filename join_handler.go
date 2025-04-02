@@ -13,10 +13,10 @@ type JoinHandler struct {
 	db *sql.DB
 }
 
-func NewJoinHandler(databasePath string) *JoinHandler {
-	db, err := sql.Open("sqlite", databasePath)
+func NewJoinHandler(dbPath string) *JoinHandler {
+	db, err := sql.Open("sqlite", dbPath)
 	if err != nil {
-		log.Fatalf("failed to connect database: %s", err.Error())
+		log.Fatalf("failed to connect database: %s", err)
 	}
 
 	createTableQuery := `CREATE TABLE IF NOT EXISTS join_events (
@@ -26,7 +26,7 @@ func NewJoinHandler(databasePath string) *JoinHandler {
 		chat_title TEXT
 	)`
 	if _, err := db.Exec(createTableQuery); err != nil {
-		log.Fatalf("failed to create table: %s", err.Error())
+		log.Fatalf("failed to create table: %s", err)
 	}
 
 	return &JoinHandler{db: db}
