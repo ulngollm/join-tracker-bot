@@ -23,7 +23,8 @@ func NewJoinHandler(dbPath string) *JoinHandler {
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
 		user_id INTEGER,
 		chat_id INTEGER,
-		chat_title TEXT
+		chat_title TEXT,
+		created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 	)`
 	if _, err := db.Exec(createTableQuery); err != nil {
 		log.Fatalf("failed to create table: %s", err)
