@@ -13,13 +13,12 @@ type JoinHandler struct {
 	db *sql.DB
 }
 
-func NewJoinHandler(databasePath string) (*JoinHandler, error) {
+func NewJoinHandler(databasePath string) *JoinHandler {
 	db, err := sql.Open("sqlite", databasePath)
 	if err != nil {
-		return nil, fmt.Errorf("failed to connect database: %w", err)
+		log.Fatalf("failed to connect database: %s", err.Error())
 	}
 
-	// Create the join_events table if it doesn't exist
 	createTableQuery := `CREATE TABLE IF NOT EXISTS join_events (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
 		user_id INTEGER,
@@ -27,19 +26,18 @@ func NewJoinHandler(databasePath string) (*JoinHandler, error) {
 		chat_title TEXT
 	)`
 	if _, err := db.Exec(createTableQuery); err != nil {
-		return nil, fmt.Errorf("failed to create table: %w", err)
+		log.Fatalf("failed to create table: %s", err.Error())
 	}
 
-	return &JoinHandler{db: db}, nil
+	return &JoinHandler{db: db}
 }
 
 func (h *JoinHandler) LogJoin(chat *tele.Chat, userID int64) error {
-	insertQuery := `INSERT INTO join_events (user_id, chat_id, chat_title) VALUES (?, ?, ?)`
-	_, err := h.db.Exec(insertQuery, userID, chat.ID, chat.Title)
+	q := `INSERT INTO join_events (user_id, chat_id, chat_title) VALUES (?, ?, ?)`
+	_, err := h.db.Exec(q, userID, chat.ID, chat.Title)
 	if err != nil {
 		return fmt.Errorf("failed to log join event: %w", err)
 	}
 
-	log.Printf("Logged join event: user %d joined chat %s", userID, chat.Title)
 	return nil
 }

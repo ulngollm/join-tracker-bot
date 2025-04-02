@@ -1,14 +1,17 @@
 package main
 
 import (
-	"fmt"
-	"github.com/joho/godotenv"
-	tele "gopkg.in/telebot.v3"
 	"log"
 	"os"
+
+	"github.com/joho/godotenv"
+	tele "gopkg.in/telebot.v3"
 )
 
-var bot *tele.Bot
+var (
+	bot         *tele.Bot
+	joinHandler *JoinHandler
+)
 
 func init() {
 	err := godotenv.Load()
@@ -21,7 +24,7 @@ func init() {
 	pref := tele.Settings{
 		Token:     botToken,
 		ParseMode: tele.ModeMarkdown,
-		Poller: &tele.LongPoller{
+		Poller:    &tele.LongPoller{
 			//AllowedUpdates: []string{"chat_member"},
 		},
 	}
@@ -33,7 +36,9 @@ func init() {
 }
 
 func main() {
-	bot.Handle(tele.OnChatMember, joinHandler)
+	joinHandler = NewJoinHandler("join_events.db")
+
+	bot.Handle(tele.OnChatMember, handleJoin)
 
 	//see also
 	//tele.OnUserJoined // todo актуальность сомнительна
@@ -43,10 +48,14 @@ func main() {
 	bot.Start()
 }
 
-func joinHandler(c tele.Context) error {
+func handleJoin(c tele.Context) error {
 	if c.ChatMember().NewChatMember.Role == tele.Left {
 		return nil
 	}
-	fmt.Printf("user %d joined to chat %s\n", c.ChatMember().Sender.ID, c.ChatMember().Chat.Title)
+	userID := c.ChatMember().Sender.ID
+	if err := joinHandler.LogJoin(c.Chat(), userID); err != nil {
+		log.Printf("logJoin: %s", err)
+	}
+	log.Printf("Logged join event: user %d joined chat %s", userID, c.Chat().Title)
 	return nil
 }
