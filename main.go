@@ -36,7 +36,6 @@ func init() {
 	if err != nil {
 		log.Fatalf("failed to connect database: %s", err)
 	}
-	defer db.Close()
 
 	joinEventRepository = repository.NewJoinEventRepository(db)
 
@@ -62,6 +61,8 @@ func main() {
 	bot.Handle(tele.OnMessageReaction, onChatReaction)
 	bot.Handle(tele.OnMessageReactionCount, onChannelReactions) // очень медленно отслеживаются
 	bot.Handle(tele.OnChatMember, handleJoin)
+
+	bot.Handle("/stats", getAdminStatistics)
 
 	bot.Start()
 }
@@ -133,4 +134,18 @@ func onChatReaction(c tele.Context) error {
 	}
 	fmt.Printf("%s %s reaction from %s to chat %s\n", t, emojis, username, r.Chat.Title)
 	return nil
+}
+
+// only admin can see statistics of chat
+func getAdminStatistics(c tele.Context) error {
+	//csv := ""
+	//user_id := c.Message().Chat.Recipient()
+	//select from log.db where created_at >= time.now().setTime(0,0 ) - start of day
+	//iterate over row
+	// select chat id and check is currenct user is admin of this chat (use c.Bot().ChatMemberOf(chat_id, user ))
+	// if is admin, add this row to csv
+	//if isAdmin {
+
+	//}
+	return c.Send("blabla") // send csv as file
 }
