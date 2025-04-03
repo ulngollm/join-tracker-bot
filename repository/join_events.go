@@ -60,21 +60,21 @@ func (r *JoinEventRepository) GetAll() ([]*JoinEvent, error) {
 	return events, nil
 }
 
-func (r *JoinEventRepository) GetFromDate(date time.Time) ([]*JoinEvent, error) {
+func (r *JoinEventRepository) GetFromDate(date time.Time) ([]JoinEvent, error) {
 	rows, err := r.db.Query("SELECT id, user_id, chat_id, chat_title, chat_type, created_at FROM join_events WHERE created_at >= ?", date)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	var events []*JoinEvent
+	var events []JoinEvent
 	for rows.Next() {
 		var event JoinEvent
 		err = rows.Scan(&event.ID, &event.UserID, &event.ChatID, &event.ChatTitle, &event.ChatType, &event.CreatedAt)
 		if err != nil {
 			return nil, err
 		}
-		events = append(events, &event)
+		events = append(events, event)
 	}
 	return events, nil
 }

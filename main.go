@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"time"
 	"welcome-bot/repository"
 
 	"github.com/joho/godotenv"
@@ -41,12 +42,13 @@ func init() {
 
 	pref := tele.Settings{
 		Token:     botToken,
-		ParseMode: tele.ModeMarkdown,
+		ParseMode: tele.ModeDefault,
 		Poller: &tele.LongPoller{
 			AllowedUpdates: []string{
 				"chat_member",
 				"message_reaction",
 				"message_reaction_count",
+				"message",
 			},
 		},
 	}
@@ -58,11 +60,11 @@ func init() {
 }
 
 func main() {
+	bot.Handle("/stats", getAdminStatistics)
+
 	bot.Handle(tele.OnMessageReaction, onChatReaction)
 	bot.Handle(tele.OnMessageReactionCount, onChannelReactions) // очень медленно отслеживаются
 	bot.Handle(tele.OnChatMember, handleJoin)
-
-	bot.Handle("/stats", getAdminStatistics)
 
 	bot.Start()
 }
@@ -136,16 +138,53 @@ func onChatReaction(c tele.Context) error {
 	return nil
 }
 
-// only admin can see statistics of chat
+// only admin or owner can see statistics of chat
 func getAdminStatistics(c tele.Context) error {
-	//csv := ""
-	//user_id := c.Message().Chat.Recipient()
-	//select from log.db where created_at >= time.now().setTime(0,0 ) - start of day
-	//iterate over row
-	// select chat id and check is currenct user is admin of this chat (use c.Bot().ChatMemberOf(chat_id, user ))
-	// if is admin, add this row to csv
-	//if isAdmin {
+	//only for private chat with bot
+	if c.Chat().Type != tele.ChatPrivate {
+		return nil
+	}
+	now := time.Now()
+	startOfDay := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
+	events, err := joinEventRepository.GetFromDate(startOfDay)
+	if err != nil {
+		return fmt.Errorf("failed to fetch events: %w", err)
+	}
 
-	//}
-	return c.Send("blabla") // send csv as file
+	if len(events) == 0 {
+		return c.Send("no data found for your chats")
+	}
+
+	//chats := make(map[int64]*tele.Chat) // чтобы вытащить доп инфу для статистики
+	chatEvents := make(map[int64][]repository.JoinEvent)
+	for _, event := range events {
+		if _, ok := chatEvents[event.ChatID]; ok {
+			chatEvents[event.ChatID] = append(chatEvents[event.ChatID], event)
+		} else {
+			chat, err := c.Bot().ChatByID(event.ChatID)
+			if err != nil {
+				return fmt.Errorf("bot.ChatByID: %w", err)
+			}
+			//chats[event.ChatID] = chat
+			chatMember, err := c.Bot().ChatMemberOf(chat, c.Sender())
+			if err != nil {
+				return fmt.Errorf("bot.ChatMemberOf: %w", err)
+			}
+			if chatMember.Role == tele.Administrator || chatMember.Role == tele.Creator {
+				chatEvents[event.ChatID] = append(chatEvents[event.ChatID], event)
+			}
+		}
+
+	}
+
+	msg := "Chat Statistics:\n\n"
+	for _, events := range chatEvents {
+		joins := make(map[int64]bool) // userID - exists
+		for _, e := range events {
+			joins[e.UserID] = true
+		}
+		msg += fmt.Sprintf("Chat: %v, users: %d\n", events[0].ChatTitle, len(joins)) // underscore сломают в MarkdownMode
+	}
+
+	return c.Send(msg)
 }
