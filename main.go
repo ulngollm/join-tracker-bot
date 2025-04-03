@@ -53,11 +53,6 @@ func main() {
 	bot.Handle(tele.OnMessageReactionCount, onChannelReactions)
 	bot.Handle(tele.OnChatMember, handleJoin)
 
-	//see also
-	//tele.OnUserJoined // когда пользователь вступает в группу и фиксируется сообщение о новом пользователе
-	//tele.OnChatJoinRequest // событие запроса на вструпление в чат. Только для тех, где установлена премодерация? see approveChatJoinRequest
-	//tele.OnMyChatMember  // показывает изменение статуса бота в этом чате
-
 	bot.Start()
 }
 
