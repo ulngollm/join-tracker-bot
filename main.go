@@ -1,17 +1,19 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
 	"log"
 	"os"
+	"welcome-bot/repository"
 
 	"github.com/joho/godotenv"
 	tele "gopkg.in/telebot.v4"
 )
 
 var (
-	bot         *tele.Bot
-	joinHandler *JoinHandler
+	bot                 *tele.Bot
+	joinEventRepository repository.JoinEventRepository
 )
 
 func init() {
@@ -30,7 +32,14 @@ func init() {
 		log.Fatalf("bot token is not set")
 	}
 
-	joinHandler = NewJoinHandler(dbPath)
+	db, err := sql.Open("sqlite", dbPath)
+	if err != nil {
+		log.Fatalf("failed to connect database: %s", err)
+	}
+	defer db.Close()
+
+	joinEventRepository = repository.NewJoinEventRepository(db)
+
 	pref := tele.Settings{
 		Token:     botToken,
 		ParseMode: tele.ModeMarkdown,
@@ -64,10 +73,18 @@ func handleJoin(c tele.Context) error {
 	//todo понять, что пользователь реально новый
 	//возможно никак. OldChatMember есть и у новых пользователей
 	userID := c.ChatMember().Sender.ID
-	t := c.ChatMember().Time()
+	chat := c.Chat()
 	//todo проверять, что пользователь впервые добавляется в чат?
-	if err := joinHandler.LogJoin(c.Chat(), userID, t); err != nil {
-		log.Printf("logJoin: %s", err)
+
+	e := repository.JoinEvent{
+		UserID:    userID,
+		ChatID:    chat.ID,
+		ChatTitle: chat.Title,
+		ChatType:  string(chat.Type),
+		CreatedAt: c.ChatMember().Time(),
+	}
+	if err := joinEventRepository.Create(e); err != nil {
+		return fmt.Errorf("joinEventRepository.Create: %w", err)
 	}
 	log.Printf("Logged join event: user %d joined chat %s", userID, c.Chat().Title)
 	return nil
