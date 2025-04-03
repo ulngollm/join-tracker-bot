@@ -25,6 +25,7 @@ func NewJoinHandler(dbPath string) *JoinHandler {
 		user_id INTEGER,
 		chat_id INTEGER,
 		chat_title TEXT,
+		chat_type TEXT,
 		created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 	)`
 	if _, err := db.Exec(createTableQuery); err != nil {
@@ -35,8 +36,8 @@ func NewJoinHandler(dbPath string) *JoinHandler {
 }
 
 func (h *JoinHandler) LogJoin(chat *tele.Chat, userID int64, timestamp time.Time) error {
-	q := `INSERT INTO join_events (user_id, chat_id, chat_title, created_at) VALUES (?, ?, ?, ?)`
-	_, err := h.db.Exec(q, userID, chat.ID, chat.Title, timestamp)
+	q := `INSERT INTO join_events (user_id, chat_id, chat_title, chat_type, created_at) VALUES (?, ?, ?, ?, ?)`
+	_, err := h.db.Exec(q, userID, chat.ID, chat.Title, chat.Type, timestamp)
 	if err != nil {
 		return fmt.Errorf("failed to log join event: %w", err)
 	}
