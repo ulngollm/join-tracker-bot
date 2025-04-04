@@ -151,10 +151,6 @@ func getAdminStatistics(c tele.Context) error {
 		return fmt.Errorf("failed to fetch events: %w", err)
 	}
 
-	if len(events) == 0 {
-		return c.Send("no data found for your chats")
-	}
-
 	//chats := make(map[int64]*tele.Chat) // чтобы вытащить доп инфу для статистики
 	chatEvents := make(map[int64][]repository.JoinEvent)
 	for _, event := range events {
@@ -175,6 +171,10 @@ func getAdminStatistics(c tele.Context) error {
 			}
 		}
 
+	}
+
+	if len(chatEvents) == 0 {
+		return c.Send("no data found for your chats")
 	}
 
 	msg := "Chat Statistics:\n\n"
