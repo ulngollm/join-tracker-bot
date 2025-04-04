@@ -183,7 +183,7 @@ func getAdminStatistics(c tele.Context) error {
 		for _, e := range events {
 			joins[e.UserID] = true
 		}
-		msg += fmt.Sprintf("Chat: %v, users: %d\n", events[0].ChatTitle, len(joins)) // underscore сломают в MarkdownMode
+		msg += fmt.Sprintf("Chat: %v, new users count: %d\n", events[0].ChatTitle, len(joins)) // underscore сломают в MarkdownMode
 	}
 
 	return c.Send(msg)
